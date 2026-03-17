@@ -5,12 +5,20 @@ import { UserWarning } from './UserWarning';
 import { getTodos, USER_ID } from './api/todos';
 import { Todo } from './types/Todo';
 
-type FilterStatus = 'all' | 'active' | 'completed';
+enum FilterStatus {
+  All = 'all',
+  Active = 'active',
+  Completed = 'completed',
+}
+
+enum ErrorMessage {
+  LoadTodos = 'Unable to load todos',
+}
 
 export const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
-  const [filterBy, setFilterBy] = useState<FilterStatus>('all');
+  const [filterBy, setFilterBy] = useState<FilterStatus>(FilterStatus.All);
 
   useEffect(() => {
     setErrorMessage('');
@@ -18,7 +26,7 @@ export const App: React.FC = () => {
     getTodos()
       .then(setTodos)
       .catch(() => {
-        setErrorMessage('Unable to load todos');
+        setErrorMessage(ErrorMessage.LoadTodos);
       });
   }, []);
 
@@ -41,11 +49,11 @@ export const App: React.FC = () => {
   }
 
   const visibleTodos = todos.filter(todo => {
-    if (filterBy === 'active') {
+    if (filterBy === FilterStatus.Active) {
       return !todo.completed;
     }
 
-    if (filterBy === 'completed') {
+    if (filterBy === FilterStatus.Completed) {
       return todo.completed;
     }
 
@@ -53,6 +61,27 @@ export const App: React.FC = () => {
   });
 
   const activeTodos = todos.filter(todo => !todo.completed);
+
+  const filterLinks = [
+    {
+      href: '#/',
+      value: FilterStatus.All,
+      label: 'All',
+      dataCy: 'FilterLinkAll',
+    },
+    {
+      href: '#/active',
+      value: FilterStatus.Active,
+      label: 'Active',
+      dataCy: 'FilterLinkActive',
+    },
+    {
+      href: '#/completed',
+      value: FilterStatus.Completed,
+      label: 'Completed',
+      dataCy: 'FilterLinkCompleted',
+    },
+  ];
 
   return (
     <div className="todoapp">
@@ -124,42 +153,21 @@ export const App: React.FC = () => {
             </span>
 
             <nav className="filter" data-cy="Filter">
-              <a
-                href="#/"
-                className={
-                  filterBy === 'all' ? 'filter__link selected' : 'filter__link'
-                }
-                data-cy="FilterLinkAll"
-                onClick={() => setFilterBy('all')}
-              >
-                All
-              </a>
-
-              <a
-                href="#/active"
-                className={
-                  filterBy === 'active'
-                    ? 'filter__link selected'
-                    : 'filter__link'
-                }
-                data-cy="FilterLinkActive"
-                onClick={() => setFilterBy('active')}
-              >
-                Active
-              </a>
-
-              <a
-                href="#/completed"
-                className={
-                  filterBy === 'completed'
-                    ? 'filter__link selected'
-                    : 'filter__link'
-                }
-                data-cy="FilterLinkCompleted"
-                onClick={() => setFilterBy('completed')}
-              >
-                Completed
-              </a>
+              {filterLinks.map(link => (
+                <a
+                  key={link.value}
+                  href={link.href}
+                  className={
+                    filterBy === link.value
+                      ? 'filter__link selected'
+                      : 'filter__link'
+                  }
+                  data-cy={link.dataCy}
+                  onClick={() => setFilterBy(link.value)}
+                >
+                  {link.label}
+                </a>
+              ))}
             </nav>
 
             <button
